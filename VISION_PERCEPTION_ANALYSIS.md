@@ -12,7 +12,7 @@ Every image holds 8 objects: 4 history (2 rounds x left/right) and 4 options.
 | `gemma3_12b` | 330 | 0.258 | 0.212 | **0.049** | 0.480 | 0.000 | 0.218 | 0.000 |
 | `llama3.2-vision_11b` | 330 | 0.627 | 0.564 | **0.430** | 0.526 | 0.036 | 0.255 | 0.027 |
 | `qwen2.5vl_7b` | 330 | 0.999 | 0.969 | **0.968** | 0.650 | 0.755 | 0.364 | 0.300 |
-| `qwen3-vl_32b` | 34 | 1.000 | 1.000 | **1.000** | 1.000 | 1.000 | 1.000 | 1.000 |
+| `qwen3-vl_32b` | 40 | 1.000 | 1.000 | **1.000** | 0.985 | 1.000 | 0.975 | 0.975 |
 
 `binding` = colour *and* shape correct on the same object; chance is 1/25 = 0.04.
 Colour or shape alone is 1/5 = 0.20. `perfect` = all 8 objects and both
@@ -28,7 +28,7 @@ different, so a low count means the model is answering from a template.
 | `gemma3_12b` | 19 | 330 | red circle / blue square / green triangle / yellow star ... | **64%** |
 | `llama3.2-vision_11b` | 185 | 330 | red circle / yellow triangle / red circle / purple triangle ... | 2% |
 | `qwen2.5vl_7b` | 39 | 330 | red circle / blue triangle / blue star / green hexagon ... | 4% |
-| `qwen3-vl_32b` | 25 | 34 | red square / blue circle / blue triangle / green square ... | 12% |
+| `qwen3-vl_32b` | 27 | 40 | red square / blue circle / blue triangle / green square ... | 10% |
 
 ## Where the selection errors come from
 
@@ -40,13 +40,13 @@ side is using position as a prior instead of reading the black border.
 | `gemma3_12b` | 0.500 | **0.840** | 0.500 | **0.160** |
 | `llama3.2-vision_11b` | 0.500 | **0.473** | 0.498 | **0.224** |
 | `qwen2.5vl_7b` | 0.500 | **0.850** | 0.500 | **0.150** |
-| `qwen3-vl_32b` | 0.500 | **0.500** | 0.500 | **0.500** |
+| `qwen3-vl_32b` | 0.500 | **0.515** | 0.500 | **0.485** |
 
 ## 3 sampled trials (`random.seed(7)`, not hand-picked)
 
 ### `or_green_square__other-shape__role-teacher`
 
-![or_green_square__other-shape__role-teacher](vision/images_224/or_green_square__other-shape__role-teacher.png)
+![or_green_square__other-shape__role-teacher](docs/perception_examples/or_green_square__other-shape__role-teacher.png)
 
 | slot | ground truth | `gemma3_12b` | `llama3.2-vision_11b` | `qwen2.5vl_7b` |
 |---|---|---|---|---|
@@ -59,7 +59,17 @@ side is using position as a prior instead of reading the black border.
 | C | blue hexagon | ✗ green triangle | ✓ blue hexagon | ✓ blue hexagon |
 | D | green star | ✗ yellow star | ✓ green star | ✓ green star |
 
-<details><summary>raw response — <code>gemma3_12b</code></summary>
+**Task answers on this image**
+
+| model | inferred rule | answer | chose | correct |
+|---|---|---|---|---|
+| `gemma3_12b` | COLOR_RULE ✗ | C | blue hexagon | ✗ |
+| `llama3.2-vision_11b` | COLOR_RULE ✗ | D | green star | ✓ |
+| `qwen2.5vl_7b` | SHAPE_RULE ✓ | B | green square | ✗ |
+
+Gold: rule **SHAPE_RULE**, answer **D** (green star)
+
+<details><summary>raw perception response — <code>gemma3_12b</code></summary>
 
 ```json
 {"objects":[{"section":"history","position":"1L","color":"red","shape":"circle","selected":true},{"section":"history","position":"1R","color":"blue","shape":"square","selected":false},{"section":"history","position":"2L","color":"green","shape":"triangle","selected":true},{"section":"history","position":"2R","color":"yellow","shape":"star","selected":false},{"section":"option","position":"A","color":"red","shape":"circle","selected":false},{"section":"option","position":"B","color":"blue","shape":"square","selected":false},{"section":"option","position":"C","color":"green","shape":"triangle","selected":false},{"section":"option","position":"D","color":"yellow","shape":"star","selected":false}]}
@@ -67,7 +77,7 @@ side is using position as a prior instead of reading the black border.
 
 </details>
 
-<details><summary>raw response — <code>llama3.2-vision_11b</code></summary>
+<details><summary>raw perception response — <code>llama3.2-vision_11b</code></summary>
 
 ```json
 {
@@ -86,7 +96,7 @@ side is using position as a prior instead of reading the black border.
 
 </details>
 
-<details><summary>raw response — <code>qwen2.5vl_7b</code></summary>
+<details><summary>raw perception response — <code>qwen2.5vl_7b</code></summary>
 
 ```json
 {"objects":[{"section":"history","position":"1L","color":"yellow","shape":"square","selected":true},{"section":"history","position":"1R","color":"green","shape":"circle","selected":false},{"section":"history","position":"2L","color":"green","shape":"triangle","selected":true},{"section":"history","position":"2R","color":"purple","shape":"square","selected":false},{"section":"option","position":"A","color":"red","shape":"square","selected":false},{"section":"option","position":"B","color":"green","shape":"square","selected":false},{"section":"option","position":"C","color":"blue","shape":"hexagon","selected":false},{"section":"option","position":"D","color":"green","shape":"star","selected":false}]}
@@ -96,7 +106,7 @@ side is using position as a prior instead of reading the black border.
 
 ### `or_blue_square__other-color__role-teacher`
 
-![or_blue_square__other-color__role-teacher](vision/images_224/or_blue_square__other-color__role-teacher.png)
+![or_blue_square__other-color__role-teacher](docs/perception_examples/or_blue_square__other-color__role-teacher.png)
 
 | slot | ground truth | `gemma3_12b` | `llama3.2-vision_11b` | `qwen2.5vl_7b` | `qwen3-vl_32b` |
 |---|---|---|---|---|---|
@@ -109,7 +119,17 @@ side is using position as a prior instead of reading the black border.
 | C | blue star | ✗ green triangle | ✓ blue star | ✓ blue star | ✓ blue star |
 | D | yellow square | ✗ yellow star | ✓ yellow square | ✓ yellow square | ✓ yellow square |
 
-<details><summary>raw response — <code>gemma3_12b</code></summary>
+**Task answers on this image**
+
+| model | inferred rule | answer | chose | correct |
+|---|---|---|---|---|
+| `gemma3_12b` | COLOR_RULE ✓ | C | blue star | ✗ |
+| `llama3.2-vision_11b` | COLOR_RULE ✓ | B | purple hexagon | ✗ |
+| `qwen2.5vl_7b` | SHAPE_RULE ✗ | A | blue square | ✗ |
+
+Gold: rule **COLOR_RULE**, answer **D** (yellow square)
+
+<details><summary>raw perception response — <code>gemma3_12b</code></summary>
 
 ```json
 {"objects":[{"section":"history","position":"1L","color":"red","shape":"circle","selected":true},{"section":"history","position":"1R","color":"blue","shape":"square","selected":false},{"section":"history","position":"2L","color":"green","shape":"triangle","selected":true},{"section":"history","position":"2R","color":"yellow","shape":"star","selected":false},{"section":"option","position":"A","color":"red","shape":"circle","selected":false},{"section":"option","position":"B","color":"blue","shape":"square","selected":false},{"section":"option","position":"C","color":"green","shape":"triangle","selected":false},{"section":"option","position":"D","color":"yellow","shape":"star","selected":false}]}
@@ -117,7 +137,7 @@ side is using position as a prior instead of reading the black border.
 
 </details>
 
-<details><summary>raw response — <code>llama3.2-vision_11b</code></summary>
+<details><summary>raw perception response — <code>llama3.2-vision_11b</code></summary>
 
 ```json
 {"objects":[{"section":"history","position":"1L","color":"red","shape":"circle","selected":true},{"section":"history","position":"1R","color":"blue","shape":"square","selected":false},{"section":"history","position":"2L","color":"green","shape":"triangle","selected":false},{"section":"history","position":"2R","color":"yellow","shape":"star","selected":false},{"section":"option","position":"A","color":"blue","shape":"square","selected":false},{"section":"option","position":"B","color":"purple","shape":"hexagon","selected":false},{"section":"option","position":"C","color":"blue","shape":"star","selected":false},{"section":"option","position":"D","color":"yellow","shape":"square","selected":false}]}
@@ -125,7 +145,7 @@ side is using position as a prior instead of reading the black border.
 
 </details>
 
-<details><summary>raw response — <code>qwen2.5vl_7b</code></summary>
+<details><summary>raw perception response — <code>qwen2.5vl_7b</code></summary>
 
 ```json
 {"objects":[{"section":"history","position":"1L","color":"red","shape":"square","selected":false},{"section":"history","position":"1R","color":"blue","shape":"circle","selected":true},{"section":"history","position":"2L","color":"blue","shape":"triangle","selected":true},{"section":"history","position":"2R","color":"green","shape":"square","selected":false},{"section":"option","position":"A","color":"blue","shape":"square","selected":false},{"section":"option","position":"B","color":"purple","shape":"hexagon","selected":false},{"section":"option","position":"C","color":"blue","shape":"star","selected":false},{"section":"option","position":"D","color":"yellow","shape":"square","selected":false}]}
@@ -133,7 +153,7 @@ side is using position as a prior instead of reading the black border.
 
 </details>
 
-<details><summary>raw response — <code>qwen3-vl_32b</code></summary>
+<details><summary>raw perception response — <code>qwen3-vl_32b</code></summary>
 
 ```json
 {
@@ -202,7 +222,7 @@ side is using position as a prior instead of reading the black border.
 
 ### `or_purple_circle__other-color__role-imposter`
 
-![or_purple_circle__other-color__role-imposter](vision/images_224/or_purple_circle__other-color__role-imposter.png)
+![or_purple_circle__other-color__role-imposter](docs/perception_examples/or_purple_circle__other-color__role-imposter.png)
 
 | slot | ground truth | `gemma3_12b` | `llama3.2-vision_11b` | `qwen2.5vl_7b` |
 |---|---|---|---|---|
@@ -215,7 +235,17 @@ side is using position as a prior instead of reading the black border.
 | C | purple circle | ✗ green triangle | ✗ red square | ✓ purple circle |
 | D | yellow hexagon | ✗ yellow star | ✓ yellow hexagon | ✓ yellow hexagon |
 
-<details><summary>raw response — <code>gemma3_12b</code></summary>
+**Task answers on this image**
+
+| model | inferred rule | answer | chose | correct |
+|---|---|---|---|---|
+| `gemma3_12b` | COLOR_RULE ✓ | B | green circle | ✗ |
+| `llama3.2-vision_11b` | COLOR_RULE ✓ | C | purple circle | ✓ |
+| `qwen2.5vl_7b` | SHAPE_RULE ✗ | B | green circle | ✗ |
+
+Gold: rule **COLOR_RULE**, answer **A/C** (purple star)
+
+<details><summary>raw perception response — <code>gemma3_12b</code></summary>
 
 ```json
 {"objects":[{"section":"history","position":"1L","color":"red","shape":"circle","selected":true},{"section":"history","position":"1R","color":"blue","shape":"square","selected":false},{"section":"history","position":"2L","color":"green","shape":"triangle","selected":true},{"section":"history","position":"2R","color":"yellow","shape":"star","selected":false},{"section":"option","position":"A","color":"red","shape":"circle","selected":false},{"section":"option","position":"B","color":"blue","shape":"square","selected":false},{"section":"option","position":"C","color":"green","shape":"triangle","selected":false},{"section":"option","position":"D","color":"yellow","shape":"star","selected":false}]}
@@ -223,7 +253,7 @@ side is using position as a prior instead of reading the black border.
 
 </details>
 
-<details><summary>raw response — <code>llama3.2-vision_11b</code></summary>
+<details><summary>raw perception response — <code>llama3.2-vision_11b</code></summary>
 
 ```json
 {"objects":[{"section":"history","position":"1L","color":"red","shape":"circle","selected":true},{"section":"history","position":"1R","color":"purple","shape":"square","selected":false},{"section":"history","position":"2L","color":"blue","shape":"triangle","selected":false},{"section":"history","position":"2R","color":"green","shape":"circle","selected":false},{"section":"option","position":"A","color":"purple","shape":"star","selected":false},{"section":"option","position":"B","color":"green","shape":"circle","selected":false},{"section":"option","position":"C","color":"red","shape":"square","selected":false},{"section":"option","position":"D","color":"yellow","shape":"hexagon","selected":false}]}
@@ -231,7 +261,7 @@ side is using position as a prior instead of reading the black border.
 
 </details>
 
-<details><summary>raw response — <code>qwen2.5vl_7b</code></summary>
+<details><summary>raw perception response — <code>qwen2.5vl_7b</code></summary>
 
 ```json
 {"objects":[{"section":"history","position":"1L","color":"red","shape":"circle","selected":true},{"section":"history","position":"1R","color":"purple","shape":"square","selected":false},{"section":"history","position":"2L","color":"purple","shape":"triangle","selected":true},{"section":"history","position":"2R","color":"blue","shape":"circle","selected":false},{"section":"option","position":"A","color":"purple","shape":"star","selected":false},{"section":"option","position":"B","color":"green","shape":"circle","selected":false},{"section":"option","position":"C","color":"purple","shape":"circle","selected":false},{"section":"option","position":"D","color":"yellow","shape":"hexagon","selected":false}]}

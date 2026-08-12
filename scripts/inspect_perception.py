@@ -26,6 +26,7 @@ import glob
 import json
 import os
 import random
+import shutil
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -66,6 +67,12 @@ def main() -> int:
     ap.add_argument("--out", type=Path, default=REPO_ROOT / "VISION_PERCEPTION_ANALYSIS.md")
     ap.add_argument("--n-examples", type=int, default=3)
     ap.add_argument("--seed", type=int, default=7, help="fixed so the sample is reproducible")
+    ap.add_argument("--task-outdir", type=Path, default=REPO_ROOT / "results_vision",
+                    help="task run, to show what the model answered as well as what it saw")
+    ap.add_argument("--examples-dir", type=Path,
+                    default=REPO_ROOT / "docs" / "perception_examples",
+                    help="sampled stimuli are copied here so the report renders "
+                         "anywhere; vision/ itself is gitignored")
     args = ap.parse_args()
 
     truth = load_truth(args.objects)
@@ -169,13 +176,41 @@ def main() -> int:
         L.append(f"| `{m}` | {c['truth_L']/nl:.3f} | **{c['pred_L']/nl:.3f}** | "
                  f"{c['truth_R']/nr:.3f} | **{c['pred_R']/nr:.3f}** |")
 
+    # ---- task answers on the same items -------------------------------------
+    gold = {}
+    gold_path = REPO_ROOT / "benchmark" / "all_120_gold.jsonl"
+    if gold_path.exists():
+        for line in gold_path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                g = json.loads(line)
+                gold[g["item_id"]] = g
+    answers = collections.defaultdict(dict)
+    for f in sorted(glob.glob(str(args.task_outdir / "raw" / "*__rep01.jsonl"))):
+        model = os.path.basename(f).split("__")[1]
+        for line in open(f):
+            row = json.loads(line)
+            payload = row.get("response")
+            if isinstance(payload, str):
+                try:
+                    payload = json.loads(payload)
+                except json.JSONDecodeError:
+                    payload = {}
+            if isinstance(payload, dict):
+                answers[row.get("item_id")][model] = payload
+
     # ---- sampled trials -----------------------------------------------------
     rng = random.Random(args.seed)
     picks = rng.sample(sorted(truth), min(args.n_examples, len(truth)))
     L += ["", f"## {len(picks)} sampled trials (`random.seed({args.seed})`, not hand-picked)", ""]
     for iid in picks:
+        src = REPO_ROOT / "vision" / "images_224" / f"{iid}.png"
+        rel = f"vision/images_224/{iid}.png"
+        if src.exists():
+            args.examples_dir.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(src, args.examples_dir / f"{iid}.png")
+            rel = os.path.relpath(args.examples_dir / f"{iid}.png", REPO_ROOT)
         L += [f"### `{iid}`", "",
-              f"![{iid}](vision/images_224/{iid}.png)", "",
+              f"![{iid}]({rel})", "",
               "| slot | ground truth | " + " | ".join(f"`{m}`" for m in sorted(raws[iid])) + " |",
               "|---|---|" + "---|" * len(raws[iid])]
         preds = {m: {key(o): o for o in (objects_of({"response": raw}) or [])}
@@ -195,8 +230,32 @@ def main() -> int:
             gt = f"{t['color']} {t['shape']}" + (" **SELECTED**" if t["selected"] else "")
             L.append(f"| {t['position']} | {gt} | " + " | ".join(cells) + " |")
         L.append("")
+
+        # What each model answered on the task, for the same image. The point of
+        # putting them together: an answer is only meaningful given what the model
+        # managed to see.
+        g = gold.get(iid)
+        if g and answers.get(iid):
+            L += ["**Task answers on this image**", "",
+                  "| model | inferred rule | answer | chose | correct |",
+                  "|---|---|---|---|---|"]
+            opts = {o["label"]: o for o in g.get("target_options", [])}
+            for m in sorted(answers[iid]):
+                a = answers[iid][m]
+                ans = str(a.get("answer", "")).upper()
+                rule = str(a.get("inferred_rule", "")) or "—"
+                chose = opts.get(ans, {}).get("text", "—")
+                ok = "✓" if ans in set(g.get("acceptable_answers", [])) else "✗"
+                rule_ok = "" if not g.get("gold_other_rule") else (
+                    " ✓" if rule == g["gold_other_rule"] else " ✗")
+                L.append(f"| `{m}` | {rule}{rule_ok} | {ans} | {chose} | {ok} |")
+            L += ["",
+                  f"Gold: rule **{g.get('gold_other_rule','—')}**, "
+                  f"answer **{'/'.join(g.get('acceptable_answers', []))}** "
+                  f"({opts.get(g.get('preferred_answer',''), {}).get('text','—')})", ""]
+
         for m in sorted(raws[iid]):
-            L += [f"<details><summary>raw response — <code>{m}</code></summary>", "",
+            L += [f"<details><summary>raw perception response — <code>{m}</code></summary>", "",
                   "```json", raws[iid][m][:4000], "```", "", "</details>", ""]
 
     args.out.write_text("\n".join(L), encoding="utf-8")
