@@ -37,6 +37,9 @@ CONDITION_SCORING: dict[str, tuple[str, str, str | None]] = {
     "ablation_choice_only": ("benchmark/main_100_gold.jsonl", "ablations", "choice_only"),
     "ablation_diagnosis_only": ("benchmark/main_100_gold.jsonl", "ablations", "diagnosis_only"),
     "ablation_action_given_rule": ("benchmark/main_100_gold.jsonl", "ablations", "action_given_rule"),
+    # Same gold and same scoring as choice_only; only the prompt framing differs,
+    # so any accuracy gap between the two is attributable to the framing.
+    "assistant_framing": ("benchmark/main_100_gold.jsonl", "ablations", "choice_only"),
 }
 
 # Scalar metrics carried into the CSVs, in report order.
@@ -156,7 +159,11 @@ def main() -> int:
         summary = score_run(args.repo_root, condition, pred_path, scores_dir)
         if summary is None:
             continue
-        metrics = ABLATION_METRICS if condition.startswith("ablation_") else MAIN_METRICS
+        # Keyed off the scorer that actually ran, not the condition's name: a
+        # condition scored by score_ablations.py reports the ablation metrics
+        # whether or not it happens to be called "ablation_*".
+        metrics = (ABLATION_METRICS if CONDITION_SCORING[condition][1] == "ablations"
+                   else MAIN_METRICS)
         row = {"condition": condition, "model": model, "rep": rep}
         row.update(run_health(pred_path))
         row.update({k: summary.get(k) for k in metrics})

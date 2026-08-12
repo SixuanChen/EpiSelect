@@ -49,6 +49,9 @@ CONDITIONS: dict[str, str] = {
     "ablation_choice_only": "requests/optional_ablation_choice_only_100_requests.jsonl",
     "ablation_diagnosis_only": "requests/optional_ablation_diagnosis_only_100_requests.jsonl",
     "ablation_action_given_rule": "requests/optional_ablation_action_given_rule_100_requests.jsonl",
+    # Teacher items reframed as an assistant taking turns with a user: no role
+    # label, no instruction to teach. Built by scripts/make_assistant_condition.py.
+    "assistant_framing": "requests/assistant_framing_50_requests.jsonl",
 }
 
 # Convenience aliases expanding to several conditions.
