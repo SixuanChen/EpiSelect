@@ -4,7 +4,7 @@ import json, csv, re, sys, collections
 from pathlib import Path
 from PIL import Image
 
-BENCH = Path("/oscar/data/tserre/schen336/aria_summer_camp/adaptive_pedagogy_benchmark_v4_final")
+BENCH = Path(__file__).resolve().parent.parent
 V = BENCH / "vision"
 fails = []
 

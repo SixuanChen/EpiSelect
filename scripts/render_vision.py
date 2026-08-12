@@ -6,13 +6,14 @@ Matched vision set: same 120 item_ids, same gold file, same scorer -- only the
 modality changes. Rendering is fully deterministic (no RNG, no seed): every object
 is pinned by the benchmark JSON.
 
-Reuses the drawing stack from binding_probe_repo/datasets/utils.py:
-  ALL_COLORS      -- color name -> RGB, verbatim
-  SHAPE_TEMPLATES -- 32x32 binary templates
-  draw_shape()    -- template -> LANCZOS resize -> colorize pipeline
+Uses the drawing stack in scripts/shape_bank.py (ALL_COLORS, SHAPE_TEMPLATES,
+draw_shape), vendored from binding_probe_repo/datasets/utils.py so this repo
+re-renders standalone -- clone it, run this, and the 120 stimuli come back
+identical, no external checkout needed.
 
-hexagon is absent from that repo's SHAPE_INDICES, so a matched template is built
-at runtime and appended to an in-memory copy. imgs.npy on disk is never touched.
+hexagon is absent from the vendored bank, so a matched template is built at
+runtime and appended to an in-memory copy; assets/shape_templates.npz is never
+touched.
 
 Usage:
     python scripts/render_vision.py                 # 224x224
@@ -35,10 +36,10 @@ import PIL
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 BENCH = Path(__file__).resolve().parent.parent
-BINDING_REPO = Path("/oscar/home/schen336/binding_probe_repo")
 
-sys.path.insert(0, str(BINDING_REPO))
-from datasets.utils import ALL_COLORS, SHAPE_TEMPLATES, SHAPE_INDICES, draw_shape  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import shape_bank  # noqa: E402
+from shape_bank import ALL_COLORS, SHAPE_TEMPLATES, SHAPE_INDICES, draw_shape  # noqa: E402
 
 # --------------------------------------------------------------------------
 # Shape templates
@@ -72,7 +73,7 @@ def build_hexagon_template(target_dark_frac: float = 0.50) -> np.ndarray:
 
 
 def make_template_bank() -> tuple[np.ndarray, dict]:
-    """In-memory SHAPE_TEMPLATES + hexagon at index 102. Disk asset untouched.
+    """In-memory SHAPE_TEMPLATES + hexagon appended. Disk asset untouched.
 
     draw_shape() resolves SHAPE_TEMPLATES / SHAPE_INDICES as module globals, so the
     extended bank is rebound on the module once here rather than per call.
@@ -82,9 +83,8 @@ def make_template_bank() -> tuple[np.ndarray, dict]:
     idx = {s: SHAPE_INDICES[s] for s in ("circle", "square", "triangle", "star")}
     idx["hexagon"] = bank.shape[0] - 1
 
-    import datasets.utils as du
-    du.SHAPE_TEMPLATES = bank
-    du.SHAPE_INDICES = idx
+    shape_bank.SHAPE_TEMPLATES = bank
+    shape_bank.SHAPE_INDICES = idx
     return bank, idx
 
 
@@ -489,7 +489,7 @@ def main() -> int:
         f"Shapes: {', '.join(BENCH_SHAPES)} (hexagon built at runtime)\n"
         f"Source: benchmark/main_100_full.jsonl + control gold files\n"
         f"Gold for scoring: benchmark/all_120_gold.jsonl (unchanged)\n"
-        f"Drawing stack: {BINDING_REPO}/datasets/utils.py\n"
+        f"Drawing stack: scripts/shape_bank.py + assets/shape_templates.npz\n"
         # Rendering is deterministic for a fixed Pillow, but PNG bytes differ
         # across Pillow versions -- pin it here so a re-render is checkable.
         f"Pillow: {PIL.__version__}\n")
