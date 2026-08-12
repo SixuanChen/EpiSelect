@@ -1,0 +1,35 @@
+# This repo holds source only. Everything below is produced by the scripts in it.
+#
+#   python generate_benchmark.py     -> benchmark/, BASE_RULES_25.*
+#   python prepare_requests.py       -> requests/
+#   python scripts/render_vision.py  -> vision/   (needs binding_probe_repo, see README)
+#   bash run_benchmark_ollama.sh     -> results*/, logs/
+
+# Generated benchmark data
+benchmark/
+requests/
+BASE_RULES_25.md
+BASE_RULES_25.csv
+BASE_RULES_25.json
+
+# Generated vision stimuli (images, VLM requests, per-object ground truth)
+vision/
+
+# Worked examples / reference predictions
+examples/
+
+# Built slide deck
+slides/
+
+# Model run outputs
+results/
+results_temp0/
+results_qwen3_fixed/
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Local editor / agent settings
+.claude/

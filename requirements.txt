@@ -1,0 +1,5 @@
+# Core generation, validation, request preparation, and scoring use only Python 3.10+ standard library.
+# Optional local Hugging Face runner:
+# torch
+# transformers>=4.45
+# accelerate

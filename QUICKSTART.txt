@@ -1,0 +1,21 @@
+ADAPTIVE PEDAGOGY BENCHMARK v4-final — 60-second quickstart
+
+1) Send each row of this file as an INDEPENDENT model call:
+   requests/all_120_requests.jsonl
+
+2) Save each response as JSONL with the same item_id, e.g.:
+   {"item_id":"or_red_circle__other-color__role-teacher","response":"{\"inferred_rule\":\"COLOR_RULE\",\"answer\":\"B\"}"}
+
+3) Score everything automatically:
+   python score_predictions.py \
+     --gold benchmark/all_120_gold.jsonl \
+     --pred results/my_model_predictions.jsonl \
+     --summary-out results/my_model_summary.json \
+     --details-out results/my_model_details.jsonl
+
+4) Read the summary. Rule inference and A/B/C/D action selection are reported separately.
+
+5) Full documentation: README.md
+6) Exact 25 rules: BASE_RULES_25.md
+7) Prompt examples: examples/SAMPLE_PROMPTS.md
+8) Design audit: ADVERSARIAL_REVIEW.md
