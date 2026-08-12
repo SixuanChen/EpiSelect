@@ -105,4 +105,10 @@ if [ "$CONDITION" != "perception" ]; then
     python "$PROJ/scripts/score_ollama_runs.py" --outdir "$OUTDIR"
 fi
 
+# ---- figures ----------------------------------------------------------------
+# plot_results.py dispatches on what the directory holds (task scores, perception
+# metrics, or assistant_framing profiles) and exits 0 when there is nothing to
+# plot, so this is safe to call unconditionally under `set -e`.
+python "$PROJ/scripts/plot_results.py" --results "$OUTDIR"
+
 echo "End time: $(date)"

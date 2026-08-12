@@ -253,6 +253,160 @@ def make_figure(mode, details, summaries, ch):
     return p
 
 
+
+# ==========================================================================
+# Perception probe figures
+# ==========================================================================
+
+def perception_figure(mode, rows, out_dir, subtitle):
+    """rows: dicts from perception_metrics.csv, one per (model, rep)."""
+    T = THEME[mode]
+    models = sorted({r["model"] for r in rows})
+
+    def ms_(model, key):
+        v = [float(r[key]) for r in rows if r["model"] == model and r.get(key) not in (None, "")]
+        return (float(np.mean(v)), float(np.std(v, ddof=1)) if len(v) > 1 else 0.0) if v else (0.0, 0.0)
+
+    fig, axes = plt.subplots(2, 2, figsize=(11.5, 8.6))
+    fig.patch.set_facecolor(T["surface"])
+    for ax in axes.flat:
+        style(ax, T)
+
+    # A: can the model name the objects at all?
+    ser = []
+    for i, (key, name) in enumerate([("color_acc", "colour"), ("shape_acc", "shape"),
+                                     ("binding_acc", "colour AND shape")]):
+        v, e = zip(*[ms_(m, key) for m in models])
+        ser.append((name, list(v), list(e), i))
+    grouped(axes[0, 0], T, models, ser,
+            chance_map=[("0.20", 0.2, 0), ("0.04", 0.04, 2)],
+            title="A  What the model can see   (chance: 0.20 per attribute, "
+                  "0.04 for both)",
+            ylabel="accuracy on reported objects", ymax=1.18)
+
+    # B: the selection border -- the one cue the task depends on.
+    ser = []
+    for i, (key, name) in enumerate([("selection_precision", "precision"),
+                                     ("selection_recall", "recall")]):
+        v, e = zip(*[ms_(m, key) for m in models])
+        ser.append((name, list(v), list(e), i))
+    grouped(axes[0, 1], T, models, ser,
+            chance_map=[("0.50", 0.5, 0)],
+            title="B  Detecting the solid black selection border   (guessing = 0.50)",
+            ylabel="on history objects", ymax=1.18)
+
+    # C: did a well-formed object list come back at all?
+    ser = []
+    for i, (key, name) in enumerate([("parse_rate", "parsed"),
+                                     ("count_match", "right number of objects")]):
+        v, e = zip(*[ms_(m, key) for m in models])
+        ser.append((name, list(v), list(e), i))
+    grouped(axes[1, 0], T, models, ser, title="C  Response well-formedness",
+            ylabel="share of images", ymax=1.18)
+
+    # D: which shapes get confused -- a stimulus-design question, not a model one.
+    conf = collections.Counter()
+    for f in sorted(glob.glob(os.path.join(out_dir, "scores", "*_perception.json"))):
+        for c in json.load(open(f)).get("top_shape_confusions", []):
+            conf[f"{c['truth']} -> {c['reported']}"] += c["n"]
+    ax = axes[1, 1]
+    top = conf.most_common(6)[::-1]
+    if top:
+        y = np.arange(len(top))
+        ax.barh(y, [c for _, c in top], color=T["series"][1], height=0.62,
+                zorder=3, edgecolor=T["surface"], linewidth=2)
+        for yi, (_, c) in zip(y, top):
+            ax.text(c + max(conf.values()) * 0.015, yi, str(c), va="center",
+                    fontsize=7.5, color=T["ink2"])
+        ax.set_yticks(y)
+        ax.set_yticklabels([k for k, _ in top], fontsize=8, color=T["ink2"])
+        ax.set_xlim(0, max(c for _, c in top) * 1.15)
+    ax.grid(axis="x", color=T["grid"], lw=1, zorder=0)
+    ax.grid(axis="y", visible=False)
+    ax.set_xlabel("objects, summed over models and reps", fontsize=8.5, color=T["ink2"])
+    ax.set_title("D  Most common shape confusions", fontsize=10, color=T["ink"],
+                 fontweight="600", loc="left", pad=8)
+
+    fig.suptitle(f"Perception probe — what the VLM reports seeing, {len(models)} models",
+                 fontsize=13.5, color=T["ink"], fontweight="700", x=0.008, ha="left", y=0.982)
+    fig.text(0.008, 0.938, subtitle, fontsize=8.5, color=T["ink2"], ha="left")
+    fig.tight_layout(rect=[0, 0.005, 1, 0.925])
+    path = os.path.join(out_dir, f"perception_overview_{mode}.png")
+    fig.savefig(path, dpi=200, facecolor=T["surface"])
+    plt.close(fig)
+    return path
+
+
+# ==========================================================================
+# assistant_framing figures
+# ==========================================================================
+
+PROFILE_ORDER = [("teacher_corrective", "teacher: corrective"),
+                 ("imposter_specific", "imposter: mimics user"),
+                 ("conservative", "conservative: fits both"),
+                 ("invalid", "invalid")]
+
+
+def assistant_figure(mode, summary, out_dir, subtitle):
+    T = THEME[mode]
+    models = sorted(summary)
+    fig, axes = plt.subplots(1, 3, figsize=(14.5, 5.0))
+    fig.patch.set_facecolor(T["surface"])
+    for ax in axes.flat:
+        style(ax, T)
+
+    # A: the whole distribution. Stacked because the four profiles partition the
+    # choices and sum to 1 -- the composition IS the result.
+    ax = axes[0]
+    x = np.arange(len(models))
+    bottom = np.zeros(len(models))
+    for i, (key, name) in enumerate(PROFILE_ORDER):
+        v = np.array([summary[m]["profile_rates"].get(key, 0.0) for m in models])
+        col = T["dead"] if key == "invalid" else T["series"][i]
+        ax.bar(x, v, bottom=bottom, width=0.6, color=col, label=name, zorder=3,
+               edgecolor=T["surface"], linewidth=2)
+        for xi, vi, bi in zip(x, v, bottom):
+            if vi > 0.06:
+                ax.text(xi, bi + vi / 2, f"{vi:.2f}", ha="center", va="center",
+                        fontsize=7.5, color=T["surface"], fontweight="600")
+        bottom += v
+    ax.set_xticks(x)
+    ax.set_xticklabels([LABEL[m] for m in models], fontsize=8, color=T["ink2"],
+                       rotation=18, ha="right")
+    ax.set_ylim(0, 1.02)
+    ax.set_ylabel("share of choices", fontsize=8.5, color=T["ink2"])
+    ax.set_title("A  Which profile does the answer match", fontsize=10, color=T["ink"],
+                 fontweight="600", loc="left", pad=8)
+    ax.legend(fontsize=7, frameon=False, loc="lower center", ncol=2,
+              bbox_to_anchor=(0.5, -0.42), labelcolor=T["ink2"], handlelength=1.2)
+
+    # B: matched halves. A profile that flips between them tracks the stimulus,
+    # not a disposition.
+    ser = []
+    for i, rule in enumerate(("COLOR_RULE", "SHAPE_RULE")):
+        v = [summary[m]["by_user_rule"].get(rule, {}).get("teacher_corrective", 0.0)
+             for m in models]
+        ser.append((f"user used {rule}", v, [0.0] * len(models), i))
+    grouped(axes[1], T, models, ser,
+            title="B  Teacher-like choice, by the rule the user showed",
+            ylabel="share choosing the corrective example", ymax=1.05)
+
+    # C: same item, same answer across reps.
+    v = [summary[m].get("answer_consistency_across_reps") or 0.0 for m in models]
+    bars(axes[2], T, models, v, [0.0] * len(models),
+         title="C  Same answer across repetitions", ylabel="share of items", ymax=1.05)
+
+    fig.suptitle("assistant_framing — no role, no instruction to teach "
+                 "(50 teacher items, recorded not scored)",
+                 fontsize=13, color=T["ink"], fontweight="700", x=0.006, ha="left", y=0.975)
+    fig.text(0.006, 0.918, subtitle, fontsize=8.5, color=T["ink2"], ha="left")
+    fig.tight_layout(rect=[0, 0.02, 1, 0.90])
+    path = os.path.join(out_dir, f"assistant_framing_{mode}.png")
+    fig.savefig(path, dpi=200, facecolor=T["surface"])
+    plt.close(fig)
+    return path
+
+
 def read_manifest(res_dir):
     """Pull the real decoding settings out of the run manifest for the subtitle."""
     p = os.path.join(res_dir, "run_manifest.json")
@@ -284,9 +438,35 @@ if __name__ == "__main__":
     else:
         SUBTITLE = "Error bars = SD across repetitions.  Dashed lines = chance."
 
+    # Dispatch on what the directory actually holds, so the same command works
+    # for a task run, the perception probe, or a record-only condition.
+    perc_csv = os.path.join(RES, "perception_metrics.csv")
+    asst_json = os.path.join(RES, "assistant_framing_summary.json")
+
+    if os.path.exists(perc_csv):
+        import csv as _csv
+        rows = list(_csv.DictReader(open(perc_csv)))
+        if rows:
+            print(f"perception run: {len({r['model'] for r in rows})} models")
+            for mode in ("light", "dark"):
+                print("wrote", perception_figure(mode, rows, OUT, SUBTITLE))
+            sys.exit(0)
+
+    if os.path.exists(asst_json):
+        summary = json.load(open(asst_json))
+        if summary:
+            print(f"assistant_framing run: {len(summary)} models")
+            for mode in ("light", "dark"):
+                print("wrote", assistant_figure(mode, summary, OUT, SUBTITLE))
+            sys.exit(0)
+
     details, summaries = load()
     if not summaries:
-        sys.exit(f"no scored runs found in {RES}/scores/")
+        # Not an error: a record-only run has no scores/ directory, and the job
+        # script calls this unconditionally.
+        print(f"nothing to plot in {RES} (no scores/, no perception or "
+              f"assistant_framing outputs)", file=sys.stderr)
+        sys.exit(0)
     # Stable order so a model keeps its position (and the greyed-out slot stays
     # put) when a later run adds another model to the same directory.
     MODELS = sorted(summaries)
