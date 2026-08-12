@@ -28,10 +28,9 @@ examples/
 # Built slide deck
 slides/
 
-# Model run outputs
-results/
-results_temp0/
-results_qwen3_fixed/
+# Model run outputs. A glob, not a list: naming each directory meant every new
+# run (results_vision, results_perception, ...) was tracked by accident.
+results*/
 logs/
 
 # Python
