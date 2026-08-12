@@ -1,13 +1,14 @@
-# This repo holds source only. Everything below is produced by the scripts in it.
+# This repo holds source plus the benchmark data itself. Everything below is
+# produced by the scripts in it and is NOT tracked:
 #
-#   python generate_benchmark.py     -> benchmark/, BASE_RULES_25.*
-#   python prepare_requests.py       -> requests/
 #   python scripts/render_vision.py  -> vision/   (needs binding_probe_repo, see README)
 #   bash run_benchmark_ollama.sh     -> results*/, logs/
+#
+# benchmark/ and requests/ ARE tracked, even though generate_benchmark.py and
+# prepare_requests.py produce them: they are the frozen v4-final release that
+# every reported number is scored against, so they are data, not build output.
 
-# Generated benchmark data
-benchmark/
-requests/
+# Rule tables regenerated alongside benchmark/ (python generate_benchmark.py)
 BASE_RULES_25.md
 BASE_RULES_25.csv
 BASE_RULES_25.json

@@ -1,0 +1,36 @@
+{
+  "benchmark": "adaptive_pedagogy_v4_final",
+  "version": "4.0-final",
+  "colors": [
+    "red",
+    "blue",
+    "green",
+    "yellow",
+    "purple"
+  ],
+  "shapes": [
+    "circle",
+    "square",
+    "triangle",
+    "star",
+    "hexagon"
+  ],
+  "num_base_rules": 25,
+  "num_main_trials": 100,
+  "num_no_history_diagnosis_controls": 10,
+  "num_no_history_choice_controls": 10,
+  "num_total_trials": 120,
+  "main_design": "25 base rules \u00d7 2 inferred other-person rules \u00d7 2 roles",
+  "main_response_schema": {
+    "inferred_rule": "COLOR_RULE|SHAPE_RULE",
+    "answer": "A|B|C|D"
+  },
+  "control_response_schemas": {
+    "diagnosis": {
+      "inferred_rule": "COLOR_RULE|SHAPE_RULE|UNKNOWN"
+    },
+    "choice": {
+      "answer": "A|B|C|D|INSUFFICIENT"
+    }
+  }
+}

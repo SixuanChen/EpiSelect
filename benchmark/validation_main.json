@@ -1,0 +1,48 @@
+{
+  "valid": true,
+  "num_main_trials": 100,
+  "num_base_rules": 25,
+  "preferred_answer_letter_counts": {
+    "B": 26,
+    "A": 26,
+    "C": 24,
+    "D": 24
+  },
+  "teacher_gold_letter_counts": {
+    "B": 13,
+    "A": 13,
+    "C": 12,
+    "D": 12
+  },
+  "history_selected_side_counts": {
+    "left": 100,
+    "right": 100
+  },
+  "target_branch_position_counts": {
+    "color_only_positive": {
+      "A": 28,
+      "B": 24,
+      "C": 24,
+      "D": 24
+    },
+    "shape_only_positive": {
+      "B": 28,
+      "C": 24,
+      "D": 24,
+      "A": 24
+    },
+    "intersection_positive": {
+      "C": 28,
+      "D": 24,
+      "A": 24,
+      "B": 24
+    },
+    "negative": {
+      "D": 28,
+      "A": 24,
+      "B": 24,
+      "C": 24
+    }
+  },
+  "errors": []
+}
