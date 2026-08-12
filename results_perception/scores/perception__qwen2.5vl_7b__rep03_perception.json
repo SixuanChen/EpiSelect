@@ -1,0 +1,45 @@
+{
+  "predictions": "/oscar/home/schen336/data/schen336/aria_summer_camp/adaptive_pedagogy_benchmark_v4_final/results_perception/raw/perception__qwen2.5vl_7b__rep03.jsonl",
+  "n_rows": 110,
+  "parse_rate": 1.0,
+  "count_match": 0.9272727272727272,
+  "n_objects_matched": 840,
+  "color_acc": 0.9988095238095238,
+  "shape_acc": 0.969047619047619,
+  "binding_acc": 0.9678571428571429,
+  "section_acc": 1.0,
+  "selection_precision": 0.65,
+  "selection_recall": 0.65,
+  "n_reading_order_fallback": 0,
+  "top_color_confusions": [
+    {
+      "truth": "purple",
+      "reported": "red",
+      "n": 1
+    }
+  ],
+  "top_shape_confusions": [
+    {
+      "truth": "hexagon",
+      "reported": "circle",
+      "n": 10
+    },
+    {
+      "truth": "triangle",
+      "reported": "circle",
+      "n": 10
+    },
+    {
+      "truth": "star",
+      "reported": "circle",
+      "n": 4
+    },
+    {
+      "truth": "hexagon",
+      "reported": "square",
+      "n": 2
+    }
+  ],
+  "model": "qwen2.5vl_7b",
+  "rep": 3
+}

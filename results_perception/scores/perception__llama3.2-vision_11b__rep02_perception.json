@@ -1,0 +1,70 @@
+{
+  "predictions": "/oscar/home/schen336/data/schen336/aria_summer_camp/adaptive_pedagogy_benchmark_v4_final/results_perception/raw/perception__llama3.2-vision_11b__rep02.jsonl",
+  "n_rows": 110,
+  "parse_rate": 1.0,
+  "count_match": 0.8636363636363636,
+  "n_objects_matched": 820,
+  "color_acc": 0.6012195121951219,
+  "shape_acc": 0.5560975609756098,
+  "binding_acc": 0.39634146341463417,
+  "section_acc": 1.0,
+  "selection_precision": 0.5409836065573771,
+  "selection_recall": 0.33,
+  "n_reading_order_fallback": 5,
+  "top_color_confusions": [
+    {
+      "truth": "yellow",
+      "reported": "red",
+      "n": 54
+    },
+    {
+      "truth": "purple",
+      "reported": "blue",
+      "n": 37
+    },
+    {
+      "truth": "blue",
+      "reported": "green",
+      "n": 32
+    },
+    {
+      "truth": "purple",
+      "reported": "red",
+      "n": 29
+    },
+    {
+      "truth": "blue",
+      "reported": "red",
+      "n": 25
+    }
+  ],
+  "top_shape_confusions": [
+    {
+      "truth": "square",
+      "reported": "circle",
+      "n": 51
+    },
+    {
+      "truth": "hexagon",
+      "reported": "circle",
+      "n": 31
+    },
+    {
+      "truth": "star",
+      "reported": "triangle",
+      "n": 29
+    },
+    {
+      "truth": "triangle",
+      "reported": "circle",
+      "n": 28
+    },
+    {
+      "truth": "hexagon",
+      "reported": "square",
+      "n": 28
+    }
+  ],
+  "model": "llama3.2-vision_11b",
+  "rep": 2
+}

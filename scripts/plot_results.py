@@ -15,11 +15,20 @@ BENCH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RES = os.path.join(BENCH, "results")
 OUT = RES
 SUBTITLE = ""
+TITLE = "Adaptive Pedagogy Benchmark v4-final"
 
-MODELS = ["gemma3_12b", "llama3.1_8b", "llama3.2_3b", "mistral_7b", "qwen3_8b"]
-LABEL = {"gemma3_12b": "gemma3:12b", "llama3.1_8b": "llama3.1:8b",
-         "llama3.2_3b": "llama3.2:3b", "mistral_7b": "mistral:7b",
-         "qwen3_8b": "qwen3:8b"}
+# Models are discovered from the results directory, so the same script serves the
+# text run, the vision run, and any future lineup. Previously hardcoded to the
+# five text models, which silently plotted nothing for a vision run.
+MODELS: list[str] = []
+
+
+def label(slug):
+    """gemma3_12b -> gemma3:12b; llama3.2-vision_11b -> llama3.2-vision:11b."""
+    return slug.rsplit("_", 1)[0] + ":" + slug.rsplit("_", 1)[1] if "_" in slug else slug
+
+
+LABEL = type("L", (), {"__getitem__": staticmethod(label)})()
 
 THEME = {
     "light": dict(surface="#fcfcfb", ink="#0b0b0b", ink2="#52514e", ink3="#7a7973",
@@ -76,11 +85,12 @@ def chance_levels(details):
 
 
 def bars(ax, T, models, vals, errs, chance=None, chance_lbl="chance",
-         title="", ylabel="", fmt="{:.2f}", ymax=1.0):
+         title="", ylabel="", fmt="{:.2f}", ymax=1.0, dead=()):
     x = np.arange(len(models))
-    cols = []
-    for m in models:
-        cols.append(T["dead"] if m == "qwen3_8b" else T["series"][models.index(m) % 4])
+    # One hue for the whole series: identity here comes from the axis labels, so
+    # colouring each bar differently would cycle the categorical ramp for no gain.
+    # Models that returned no parseable JSON are greyed out instead.
+    cols = [T["dead"] if m in (dead or ()) else T["series"][0] for m in models]
     b = ax.bar(x, vals, width=0.62, color=cols, zorder=3,
                edgecolor=T["surface"], linewidth=2)
     for r in b:
@@ -118,11 +128,11 @@ def grouped(ax, T, models, series, chance_map=None, title="", ylabel="", ymax=1.
         for xi, v, e in zip(x + off, vals, errs):
             ax.text(xi, v + e + 0.02, f"{v:.2f}", ha="center", va="bottom",
                     fontsize=6.8, color=T["ink2"])
-    ax.set_xlim(-0.62, len(models) - 0.38)
+    ax.set_xlim(-0.78, len(models) - 0.32)
     if chance_map:
         for i, (lbl, lvl, ci) in enumerate(chance_map):
             ax.axhline(lvl, color=T["chance"], lw=1.3, ls=(0, (4, 3)), zorder=2)
-            ax.text(len(models) - 0.42, lvl + 0.015, lbl, ha="right", va="bottom",
+            ax.text(-0.74, lvl + 0.015, lbl, ha="left", va="bottom",
                     fontsize=7, color=T["ink3"], style="italic")
     ax.set_xticks(x)
     ax.set_xticklabels([LABEL[m] for m in models], fontsize=8, color=T["ink2"],
@@ -146,9 +156,22 @@ def style(ax, T):
     ax.tick_params(colors=T["ink3"], labelsize=8, length=0)
 
 
+def dead_models(details, thresh=0.99):
+    """Models whose responses almost never parsed -- their bars are meaningless.
+
+    Derived from the scored rows rather than hardcoded, so a run where every model
+    behaves is not silently mislabelled.
+    """
+    out = set()
+    for m, rows in details.items():
+        if rows and sum(1 for r in rows if not r.get("strict_json")) / len(rows) >= thresh:
+            out.add(m)
+    return out
+
+
 def make_figure(mode, details, summaries, ch):
     T = THEME[mode]
-    valid = [m for m in MODELS if m != "qwen3_8b"]
+    dead = dead_models(details)
     fig, axes = plt.subplots(2, 2, figsize=(11.5, 8.6))
     fig.patch.set_facecolor(T["surface"])
     for ax in axes.flat:
@@ -159,9 +182,11 @@ def make_figure(mode, details, summaries, ch):
     bars(axes[0, 0], T, MODELS, list(v), list(e), chance=ch["main_joint"],
          chance_lbl=f"chance {ch['main_joint']:.2f}",
          title="A  Joint success (100 main trials)",
-         ylabel="rule + action both correct")
-    axes[0, 0].text(4, 0.075, "no valid\nJSON", ha="center", va="bottom",
-                    fontsize=7, color=T["ink3"], style="italic")
+         ylabel="rule + action both correct", dead=dead)
+    for i, m in enumerate(MODELS):
+        if m in dead:
+            axes[0, 0].text(i, 0.075, "no valid\nJSON", ha="center", va="bottom",
+                            fontsize=7, color=T["ink3"], style="italic")
 
     # B: rule inference vs action, split by role
     s = [("rule inference", *zip(*[ms(summaries, m, "main_rule_inference_accuracy")
@@ -202,8 +227,9 @@ def make_figure(mode, details, summaries, ch):
             ax.text(xi, v + 0.02, f"{v:.2f}", ha="center", va="bottom",
                     fontsize=6.8, color=T["ink2"])
     ax.axhline(0.5, color=T["chance"], lw=1.5, ls=(0, (4, 3)), zorder=2)
-    ax.text(-0.48, 0.52, "ground truth 50 / 50", fontsize=7, color=T["ink3"],
-            style="italic")
+    ax.set_xlim(-0.95, len(MODELS) - 0.35)
+    ax.text(-0.92, 0.52, "ground truth\n50 / 50", fontsize=7, color=T["ink3"],
+            style="italic", va="bottom")
     ax.set_xticks(x)
     ax.set_xticklabels([LABEL[m] for m in MODELS], fontsize=8, color=T["ink2"],
                        rotation=18, ha="right")
@@ -214,7 +240,9 @@ def make_figure(mode, details, summaries, ch):
     ax.legend(fontsize=7.5, frameon=False, loc="upper right", ncol=2,
               labelcolor=T["ink2"], handlelength=1.2)
 
-    fig.suptitle("Adaptive Pedagogy Benchmark v4-final — 5 local models, 120 trials × 3 reps",
+    n_items = len({r["item_id"] for rows in details.values() for r in rows})
+    n_reps = max((len(v) for v in summaries.values()), default=1)
+    fig.suptitle(f"{TITLE} — {len(MODELS)} models, {n_items} trials × {n_reps} reps",
                  fontsize=13.5, color=T["ink"], fontweight="700", x=0.008, ha="left",
                  y=0.982)
     fig.text(0.008, 0.938, SUBTITLE, fontsize=8.5, color=T["ink2"], ha="left")
@@ -259,6 +287,12 @@ if __name__ == "__main__":
     details, summaries = load()
     if not summaries:
         sys.exit(f"no scored runs found in {RES}/scores/")
+    # Stable order so a model keeps its position (and the greyed-out slot stays
+    # put) when a later run adds another model to the same directory.
+    MODELS = sorted(summaries)
+    if m and m.get("backend"):                       # written by run_vlm.py only
+        TITLE = "Adaptive Pedagogy Benchmark v4-final — VISION"
+    print("models:", ", ".join(MODELS))
     ch = chance_levels(details)
     print(f"results: {RES}")
     print("chance:", {k: round(v, 3) for k, v in ch.items()})

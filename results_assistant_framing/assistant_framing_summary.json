@@ -1,0 +1,64 @@
+{
+  "llama3.1_8b": {
+    "n": 150,
+    "profile_rates": {
+      "teacher_corrective": 0.04,
+      "imposter_specific": 0.06,
+      "conservative": 0.9,
+      "invalid": 0.0,
+      "unparseable": 0.0
+    },
+    "by_user_rule": {
+      "COLOR_RULE": {
+        "teacher_corrective": 0.08,
+        "imposter_specific": 0.0,
+        "conservative": 0.92,
+        "invalid": 0.0
+      },
+      "SHAPE_RULE": {
+        "teacher_corrective": 0.0,
+        "imposter_specific": 0.12,
+        "conservative": 0.88,
+        "invalid": 0.0
+      }
+    },
+    "answer_consistency_across_reps": 1.0,
+    "answer_distribution": {
+      "B": 48,
+      "D": 39,
+      "A": 33,
+      "C": 30
+    }
+  },
+  "llama3.2_3b": {
+    "n": 150,
+    "profile_rates": {
+      "teacher_corrective": 0.08,
+      "imposter_specific": 0.02,
+      "conservative": 0.9,
+      "invalid": 0.0,
+      "unparseable": 0.0
+    },
+    "by_user_rule": {
+      "COLOR_RULE": {
+        "teacher_corrective": 0.0,
+        "imposter_specific": 0.04,
+        "conservative": 0.96,
+        "invalid": 0.0
+      },
+      "SHAPE_RULE": {
+        "teacher_corrective": 0.16,
+        "imposter_specific": 0.0,
+        "conservative": 0.84,
+        "invalid": 0.0
+      }
+    },
+    "answer_consistency_across_reps": 1.0,
+    "answer_distribution": {
+      "C": 51,
+      "D": 30,
+      "A": 27,
+      "B": 42
+    }
+  }
+}

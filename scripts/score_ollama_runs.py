@@ -37,10 +37,13 @@ CONDITION_SCORING: dict[str, tuple[str, str, str | None]] = {
     "ablation_choice_only": ("benchmark/main_100_gold.jsonl", "ablations", "choice_only"),
     "ablation_diagnosis_only": ("benchmark/main_100_gold.jsonl", "ablations", "diagnosis_only"),
     "ablation_action_given_rule": ("benchmark/main_100_gold.jsonl", "ablations", "action_given_rule"),
-    # Same gold and same scoring as choice_only; only the prompt framing differs,
-    # so any accuracy gap between the two is attributable to the framing.
-    "assistant_framing": ("benchmark/main_100_gold.jsonl", "ablations", "choice_only"),
 }
+
+# Conditions that are deliberately NOT scored for accuracy. assistant_framing has
+# no correct answer: the model is never told to teach, so a teacher-like choice is
+# not "right" and an imposter-like choice is not "wrong". What matters is which
+# profile the answer matches, which scripts/analyze_assistant_framing.py reports.
+RECORD_ONLY = {"assistant_framing"}
 
 # Scalar metrics carried into the CSVs, in report order.
 MAIN_METRICS = [
@@ -149,6 +152,10 @@ def main() -> int:
             print(f"  skipping unrecognised file name {pred_path.name}", file=sys.stderr)
             continue
         condition, model, rep = m["condition"], m["model"], int(m["rep"])
+        if condition in RECORD_ONLY:
+            print(f"  skipping {condition!r}: record-only, no accuracy to report "
+                  f"(see scripts/analyze_assistant_framing.py)", file=sys.stderr)
+            continue
         if condition not in CONDITION_SCORING:
             print(f"  skipping unknown condition {condition!r}", file=sys.stderr)
             continue
@@ -172,7 +179,10 @@ def main() -> int:
         per_run.append(row)
 
     if not per_run:
-        raise SystemExit("nothing scored")
+        # Not an error: a run directory may hold only record-only conditions.
+        print("nothing to score in this directory (record-only conditions are "
+              "analysed separately)", file=sys.stderr)
+        return 0
 
     all_metric_cols = [c for c in MAIN_METRICS + ABLATION_METRICS]
     health_cols = ["n_rows", "n_errors", "num_missing", "n_json_exact",
