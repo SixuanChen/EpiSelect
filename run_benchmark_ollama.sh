@@ -25,8 +25,15 @@ MODELS="${MODELS:-llama3.1:8b llama3.2:3b qwen3:8b gemma3:12b mistral:7b}"
 CONDITIONS="${CONDITIONS:-main controls}"
 REPS="${REPS:-3}"
 TEMPERATURE="${TEMPERATURE:-1.0}"
-MAX_TOKENS="${MAX_TOKENS:-256}"
-NUM_CTX="${NUM_CTX:-4096}"
+# 256 truncated every qwen3 answer: its reasoning channel ate the whole budget,
+# so 360 calls returned done_reason="length" with empty content. See
+# QWEN3_FAILURE_ANALYSIS.md. 4096 is far above the ~20 tokens the other models
+# need, and costs them nothing -- generation still stops at the closing brace.
+MAX_TOKENS="${MAX_TOKENS:-4096}"
+# Must exceed MAX_TOKENS plus the prompt: num_ctx is the TOTAL window in Ollama,
+# so leaving this at 4096 would make a 4096-token generation overrun it and
+# trigger context shifting.
+NUM_CTX="${NUM_CTX:-8192}"
 WORKERS="${WORKERS:-1}"
 OUTDIR="${OUTDIR:-$PROJ/results}"
 EXTRA_ARGS="${EXTRA_ARGS:-}"
