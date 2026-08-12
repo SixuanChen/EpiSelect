@@ -457,12 +457,13 @@ def main() -> int:
     ap.add_argument("--outdir", default=str(BENCH / "vision"))
     ap.add_argument("--contact-only", action="store_true",
                     help="render only the legibility contact sheet")
-    ap.add_argument("--perception", choices=["inline", "none"], default="inline",
-                    help="inline: the task prompt also asks the model to list the "
-                         "objects it can see (extra `objects` key in the answer "
-                         "JSON). none: task prompt only, byte-comparable with the "
-                         "text run. The standalone perception-only request file is "
-                         "written either way.")
+    ap.add_argument("--perception", choices=["none", "inline"], default="none",
+                    help="none (default): task prompt only, byte-comparable with "
+                         "the text run. inline: the task prompt also asks the model "
+                         "to list the objects it sees, adding an `objects` key to "
+                         "the answer JSON -- a scaffold that changes the task, so "
+                         "prefer the standalone perception probe, which is written "
+                         "either way.")
     args = ap.parse_args()
 
     bank, idx = make_template_bank()
