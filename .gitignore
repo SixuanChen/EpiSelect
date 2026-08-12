@@ -13,8 +13,14 @@ BASE_RULES_25.md
 BASE_RULES_25.csv
 BASE_RULES_25.json
 
-# Generated vision stimuli (images, VLM requests, per-object ground truth)
-vision/
+# Generated vision stimuli. The PNGs, per-object ground truth and labels are
+# rebuilt exactly by scripts/render_vision.py, so only the two request files are
+# tracked -- they carry the prompt text, which should be readable from a clone.
+# Note this must be `vision/*`, not `vision/`: git cannot re-include a file
+# inside an excluded directory.
+vision/*
+!vision/all_120_vlm_requests.jsonl
+!vision/all_120_perception_requests.jsonl
 
 # Worked examples / reference predictions
 examples/
