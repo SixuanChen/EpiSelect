@@ -1,4 +1,4 @@
-# Adaptive Pedagogy Benchmark v4-final
+# Adaptive Pedagogy Benchmark
 
 A self-contained, automatically generated and automatically scored benchmark for **learner-sensitive rule inference** and **audience-sensitive evidence selection**.
 
