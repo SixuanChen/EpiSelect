@@ -1,0 +1,30 @@
+EpiSelect Level 2 Advanced Logic v3 — Quick Start
+
+1. Install optional dependencies:
+   python -m pip install -r requirements.txt
+
+2. Regenerate deterministic assets:
+   python generate_benchmark.py --root .
+
+3. Validate:
+   python validate_benchmark.py --root . --out benchmark/validation.json
+
+4. Self-test:
+   python self_test.py
+
+5. Primary model requests:
+   requests/primary_staged_120_contexts.jsonl
+
+6. Helpful-assistant requests:
+   requests/naturalistic_null_120_requests.jsonl
+
+7. Private primary gold (NEVER send to model):
+   benchmark/primary_240_gold.jsonl
+
+8. Adapt model calling in:
+   scripts/run_model_template.py
+
+9. Score:
+   python score_predictions.py --gold benchmark/primary_240_gold.jsonl --pred YOUR_RESULTS.jsonl --summary-out summary.json --details-out details.jsonl
+
+10. Read README.md and CODING_AGENT_PROMPT.md before paid full runs.

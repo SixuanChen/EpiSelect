@@ -33,6 +33,17 @@ slides/
 results*/
 logs/
 
+# Level 2 (level2_advanced_logic_v3/) tracks code and docs only. Unlike the
+# v4-final tree above, its benchmark/ and requests/ are NOT tracked: its
+# generate_benchmark.py imports no random, so `python generate_benchmark.py`
+# rebuilds every gold and request file byte-identically, and the tree is 15 MB.
+# Anchored paths, not bare names, so these never shadow the v4 directories.
+level2_advanced_logic_v3/benchmark/
+level2_advanced_logic_v3/requests/
+level2_advanced_logic_v3/stimuli/
+level2_advanced_logic_v3/RULE_DISTRIBUTION.csv
+level2_advanced_logic_v3/RULE_DISTRIBUTION.json
+
 # Python
 __pycache__/
 *.py[cod]
